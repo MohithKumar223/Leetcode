@@ -1,0 +1,47 @@
+class Solution {
+
+    HashMap<Integer, Boolean> memo = new HashMap<>();
+
+    public boolean canIWin(int maxChoosableInteger, int desiredTotal) {
+
+        // If target already reached
+        if (desiredTotal <= 0) return true;
+
+        int sum = (maxChoosableInteger * (maxChoosableInteger + 1)) / 2;
+
+        // Impossible to reach target
+        if (sum < desiredTotal) return false;
+
+        return dfs(maxChoosableInteger, desiredTotal, 0);
+    }
+
+    private boolean dfs(int max, int target, int mask) {
+
+        if (memo.containsKey(mask)) {
+            return memo.get(mask);
+        }
+
+        for (int i = 1; i <= max; i++) {
+
+            int bit = 1 << (i - 1);
+
+            // number already used
+            if ((mask & bit) != 0) continue;
+
+            // current player wins immediately
+            if (i >= target) {
+                memo.put(mask, true);
+                return true;
+            }
+
+            // if opponent loses, current player wins
+            if (!dfs(max, target - i, mask | bit)) {
+                memo.put(mask, true);
+                return true;
+            }
+        }
+
+        memo.put(mask, false);
+        return false;
+    }
+}
