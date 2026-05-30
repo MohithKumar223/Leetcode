@@ -1,0 +1,33 @@
+import java.util.*;
+
+class Solution {
+    public List<Boolean> getResults(int[][] queries) {
+        TreeSet<Integer> obstacles = new TreeSet<>();
+        List<Boolean> ans = new ArrayList<>();
+
+        for (int[] q : queries) {
+
+            if (q[0] == 1) {
+                obstacles.add(q[1]);
+            } else {
+
+                int x = q[1];
+                int sz = q[2];
+
+                int prev = 0;
+                int maxGap = 0;
+
+                for (int pos : obstacles.headSet(x + 1)) {
+                    maxGap = Math.max(maxGap, pos - prev);
+                    prev = pos;
+                }
+
+                maxGap = Math.max(maxGap, x - prev);
+
+                ans.add(maxGap >= sz);
+            }
+        }
+
+        return ans;
+    }
+}
