@@ -1,19 +1,21 @@
+import java.util.*;
+
 class Solution {
 
-    public long earliestFinishTime(int[] landStartTime, int[] landDuration,
-                                   int[] waterStartTime, int[] waterDuration) {
+    public int earliestFinishTime(int[] landStartTime, int[] landDuration,
+                                  int[] waterStartTime, int[] waterDuration) {
 
         long ans = Long.MAX_VALUE;
 
         ans = Math.min(ans,
                 solve(landStartTime, landDuration,
-                      waterStartTime, waterDuration));
+                        waterStartTime, waterDuration));
 
         ans = Math.min(ans,
                 solve(waterStartTime, waterDuration,
-                      landStartTime, landDuration));
+                        landStartTime, landDuration));
 
-        return ans;
+        return (int) ans;
     }
 
     private long solve(int[] firstStart, int[] firstDur,
@@ -31,7 +33,6 @@ class Solution {
         Arrays.sort(rides, (a, b) -> Integer.compare(a[0], b[0]));
 
         int[] starts = new int[m];
-
         long[] prefMinDur = new long[m];
         long[] suffMinFinish = new long[m];
 
@@ -44,8 +45,7 @@ class Solution {
             prefMinDur[i] = Math.min(prefMinDur[i - 1], rides[i][1]);
         }
 
-        suffMinFinish[m - 1] =
-                (long) rides[m - 1][0] + rides[m - 1][1];
+        suffMinFinish[m - 1] = (long) rides[m - 1][0] + rides[m - 1][1];
 
         for (int i = m - 2; i >= 0; i--) {
             suffMinFinish[i] = Math.min(
@@ -58,23 +58,18 @@ class Solution {
 
         for (int i = 0; i < firstStart.length; i++) {
 
-            long finishFirst =
-                    (long) firstStart[i] + firstDur[i];
+            long finishFirst = (long) firstStart[i] + firstDur[i];
 
             int pos = upperBound(starts, finishFirst);
 
             if (pos > 0) {
-                ans = Math.min(
-                        ans,
-                        finishFirst + prefMinDur[pos - 1]
-                );
+                ans = Math.min(ans,
+                        finishFirst + prefMinDur[pos - 1]);
             }
 
             if (pos < m) {
-                ans = Math.min(
-                        ans,
-                        suffMinFinish[pos]
-                );
+                ans = Math.min(ans,
+                        suffMinFinish[pos]);
             }
         }
 
@@ -87,11 +82,10 @@ class Solution {
         while (l < r) {
             int mid = l + (r - l) / 2;
 
-            if (arr[mid] <= target) {
+            if (arr[mid] <= target)
                 l = mid + 1;
-            } else {
+            else
                 r = mid;
-            }
         }
 
         return l;
