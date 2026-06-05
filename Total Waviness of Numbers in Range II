@@ -1,0 +1,91 @@
+import java.util.Arrays;
+
+class Solution {
+    // dp[index][tight][isStarted][lastDigit][secondLastDigit]
+    // Since lastDigit and secondLastDigit can be 0-9, we use 10. We use 11 to represent an empty/unset state.
+    private Long[][][][][] memoCount;
+    private Long[][][][][] memoSum;
+
+    public long totalWaviness(long num1, long num2) {
+        return solve(num2) - solve(num1 - 1);
+    }
+
+    private long solve(long num) {
+        if (num < 100) {
+            return 0; // Any number with fewer than 3 digits has a waviness of 0
+        }
+
+        String s = Long.toString(num);
+        int n = s.length();
+
+        // Initialize memoization arrays
+        memoCount = new Long[n][2][2][12][12];
+        memoSum = new Long[n][2][2][12][12];
+
+        long[] result = digitDP(0, 1, 0, 11, 11, s);
+        return result[1];
+    }
+
+    /**
+     * Returns an array of two longs: [count of valid numbers, sum of waviness]
+     */
+    private long[] digitDP(int index, int tight, int isStarted, int lastDigit, int secondLastDigit, String s) {
+        // Base case: reached the end of the digit string
+        if (index == s.length()) {
+            return new long[]{1, 0};
+        }
+
+        // Return memoized result if available
+        if (memoCount[index][tight][isStarted][lastDigit][secondLastDigit] != null) {
+            return new long[]{
+                memoCount[index][tight][isStarted][lastDigit][secondLastDigit],
+                memoSum[index][tight][isStarted][lastDigit][secondLastDigit]
+            };
+        }
+
+        long totalCount = 0;
+        long totalSum = 0;
+
+        int limit = (tight == 1) ? (s.charAt(index) - '0') : 9;
+
+        for (int digit = 0; digit <= limit; digit++) {
+            int nextTight = (tight == 1 && digit == limit) ? 1 : 0;
+            int nextStarted = (isStarted == 1 || digit > 0) ? 1 : 0;
+
+            // Calculate if the *last* digit forms a peak or a valley with secondLastDigit and the current digit.
+            // Note: The first and last digits of the final number cannot be peaks/valleys, 
+            // but since we evaluate the "lastDigit" when processing the "current digit", 
+            // it is guaranteed not to be the final trailing digit of the sequence.
+            int wavinessContribution = 0;
+            if (isStarted == 1 && secondLastDigit != 11 && lastDigit != 11) {
+                if (lastDigit > secondLastDigit && lastDigit > digit) {
+                    wavinessContribution = 1; // Peak
+                } else if (lastDigit < secondLastDigit && lastDigit < digit) {
+                    wavinessContribution = 1; // Valley
+                }
+            }
+
+            long[] nextResult;
+            if (nextStarted == 0) {
+                // We haven't started placing digits yet (treating current 0 as a leading zero)
+                nextResult = digitDP(index + 1, nextTight, 0, 11, 11, s);
+            } else {
+                // Pass the current digit as the new lastDigit, and the old lastDigit as secondLastDigit
+                nextResult = digitDP(index + 1, nextTight, 1, digit, lastDigit, s);
+            }
+
+            long nextCount = nextResult[0];
+            long nextSum = nextResult[1];
+
+            totalCount += nextCount;
+            // Total waviness from branch = (waviness from deeper branches) + (contribution of this transition * count of combinations downstream)
+            totalSum += nextSum + (wavinessContribution * nextCount);
+        }
+
+        // Memoize and return
+        memoCount[index][tight][isStarted][lastDigit][secondLastDigit] = totalCount;
+        memoSum[index][tight][isStarted][lastDigit][secondLastDigit] = totalSum;
+
+        return new long[]{totalCount, totalSum};
+    }
+}
