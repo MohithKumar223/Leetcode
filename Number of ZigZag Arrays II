@@ -1,0 +1,94 @@
+import java.util.Arrays;
+
+class Solution {
+    private static final int MOD = 1_000_000_007;
+
+    public int zigZagArrays(int n, int l, int r) {
+        int m = r - l + 1;
+        
+        // Base case: for an array of length 1, any single value in [l, r] is valid.
+        if (n == 1) {
+            return m;
+        }
+
+        int size = 2 * m;
+        long[][] T = new long[size][size];
+
+        // Build the transition matrix T
+        // State i (0 <= i < m): Next transition must go UP
+        // State i (m <= i < 2m): Next transition must go DOWN
+        for (int x = 0; x < m; x++) {
+            // From "Next is UP" at x, we must transition to a y > x.
+            // After moving to y, the next transition must be DOWN (y + m).
+            for (int y = x + 1; y < m; y++) {
+                T[y + m][x] = 1;
+            }
+            
+            // From "Next is DOWN" at x, we must transition to a y < x.
+            // After moving to y, the next transition must be UP (y).
+            for (int y = 0; y < x; y++) {
+                T[y][x + m] = 1;
+            }
+        }
+
+        // Compute T^(n-1)
+        long[][] Tn = matrixPower(T, n - 1);
+
+        // Initial state vector for length 1:
+        // Since the first transition can be either UP or DOWN, each starting element 
+        // contributes 1 to the "Next is UP" group and 1 to the "Next is DOWN" group.
+        long[] init = new long[size];
+        Arrays.fill(init, 1);
+
+        // Multiply Tn by the initial vector and sum the total valid combinations
+        long totalWays = 0;
+        for (int i = 0; i < size; i++) {
+            long currentSubtotal = 0;
+            for (int j = 0; j < size; j++) {
+                currentSubtotal = (currentSubtotal + Tn[i][j] * init[j]) % MOD;
+            }
+            totalWays = (totalWays + currentSubtotal) % MOD;
+        }
+
+        return (int) totalWays;
+    }
+
+    // Fast matrix exponentiation: O(size^3 * log(exp))
+    private long[][] matrixPower(long[][] base, int exp) {
+        int n = base.length;
+        long[][] result = new long[n][n];
+        for (int i = 0; i < n; i++) {
+            result[i][i] = 1;
+        }
+
+        long[][] currentBase = new long[n][n];
+        for (int i = 0; i < n; i++) {
+            System.arraycopy(base[i], 0, currentBase[i], 0, n);
+        }
+
+        while (exp > 0) {
+            if ((exp & 1) == 1) {
+                result = multiply(result, currentBase);
+            }
+            currentBase = multiply(currentBase, currentBase);
+            exp >>= 1;
+        }
+        return result;
+    }
+
+    // Helper method to multiply two matrices with modulo
+    private long[][] multiply(long[][] A, long[][] B) {
+        int n = A.length;
+        long[][] C = new long[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int k = 0; k < n; k++) {
+                if (A[i][k] == 0) continue;
+                for (int j = 0; j < n; j++) {
+                    if (B[k][j] == 0) continue;
+                    C[i][j] = (C[i][j] + A[i][k] * B[k][j]) % MOD;
+                }
+            }
+        }
+        return C;
+    }
+}
