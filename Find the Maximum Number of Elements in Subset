@@ -2,40 +2,53 @@ import java.util.*;
 
 class Solution {
     public int maximumLength(int[] nums) {
-
+        // Map to store frequencies of numbers using Long to prevent key mismatch
         HashMap<Long, Integer> freq = new HashMap<>();
-
-        for (int x : nums)
+        for (int x : nums) {
             freq.put((long) x, freq.getOrDefault((long) x, 0) + 1);
+        }
 
         int ans = 1;
 
-        // Handle 1 separately
+        // 1. Handle the base element 1 separately since 1^2 = 1
         if (freq.containsKey(1L)) {
             int cnt = freq.get(1L);
+            // An odd number of 1s can form a perfectly balanced subset
             ans = Math.max(ans, cnt % 2 == 1 ? cnt : cnt - 1);
         }
 
+        // 2. Process all other elements
         for (long x : freq.keySet()) {
-
             if (x == 1) continue;
 
             long cur = x;
             int len = 0;
 
-            while (freq.getOrDefault(cur, 0) >= 2) {
-                len += 2;
-
-                if (cur > 1000000000L / cur) break; // prevent overflow
-                cur = cur * cur;
+            // Follow the chain as long as we have at least 1 instance of the element
+            while (freq.getOrDefault(cur, 0) >= 1) {
+                if (freq.get(cur) >= 2) {
+                    len += 2;
+                    
+                    // Prevent overflow before squaring
+                    if (cur > 1000000000L / cur) {
+                        // Overflow happens, so 'cur' cannot be squared. 
+                        // The pair we just added cannot be split to move forward, 
+                        // but 1 of them can act as the peak element.
+                        ans = Math.max(ans, len - 1);
+                        break;
+                    }
+                    cur = cur * cur;
+                } else {
+                    // We only have exactly 1 copy left. It MUST be the peak element.
+                    len += 1;
+                    ans = Math.max(ans, len);
+                    break;
+                }
+                
+                // If we choose to stop right here, 1 copy of 'cur' can act as the peak.
+                // Since we added 2 to 'len', the valid subset up to here is len - 1.
+                ans = Math.max(ans, len - 1); 
             }
-
-            if (freq.getOrDefault(cur, 0) >= 1)
-                len++;
-            else
-                len--;
-
-            ans = Math.max(ans, len);
         }
 
         return ans;
