@@ -1,0 +1,79 @@
+import java.util.*;
+
+class Solution {
+    public int findMaxPathScore(int[][] edges, boolean[] online, long k) {
+        int n = online.length;
+        
+        // Build adjacency list for easy graph traversal
+        List<int[]>[] graph = new ArrayList[n];
+        for (int i = 0; i < n; i++) {
+            graph[i] = new ArrayList<>();
+        }
+        
+        int low = Integer.MAX_VALUE;
+        int high = -1;
+        for (int[] edge : edges) {
+            int u = edge[0];
+            int v = edge[1];
+            int cost = edge[2];
+            graph[u].add(new int[]{v, cost});
+            low = Math.min(low, cost);
+            high = Math.max(high, cost);
+        }
+        
+        // If there are no edges or low wasn't updated
+        if (high == -1) return -1;
+        
+        int ans = -1;
+        
+        // Binary search for the maximum possible minimum-edge-cost
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            
+            if (check(mid, graph, online, k, n)) {
+                ans = mid; // mid is possible, try to find a larger minimum edge cost
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        
+        return ans;
+    }
+    
+    private boolean check(int minEdgeCost, List<int[]>[] graph, boolean[] online, long maxTotalCost, int n) {
+        // Run Dijkstra's algorithm to find the minimum total cost path using edges >= minEdgeCost
+        long[] minCost = new long[n];
+        Arrays.fill(minCost, Long.MAX_VALUE);
+        minCost[0] = 0;
+        
+        PriorityQueue<long[]> pq = new PriorityQueue<>(Comparator.comparingLong(a -> a[1]));
+        pq.offer(new long[]{0, 0}); // {node, current_total_cost}
+        
+        while (!pq.isEmpty()) {
+            long[] curr = pq.poll();
+            int u = (int) curr[0];
+            long costSoFar = curr[1];
+            
+            if (costSoFar > minCost[u]) continue;
+            if (u == n - 1) return costSoFar <= maxTotalCost;
+            
+            for (int[] nbr : graph[u]) {
+                int v = nbr[0];
+                int edgeCost = nbr[1];
+                
+                // Route is invalid if the target node is offline or edge cost is lower than our binary search target
+                if (!online[v] || edgeCost < minEdgeCost) {
+                    continue;
+                }
+                
+                if (costSoFar + edgeCost < minCost[v]) {
+                    minCost[v] = costSoFar + edgeCost;
+                    pq.offer(new long[]{v, minCost[v]});
+                }
+            }
+        }
+        
+        return minCost[n - 1] <= maxTotalCost;
+    }
+}
