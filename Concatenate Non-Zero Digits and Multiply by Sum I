@@ -1,0 +1,18 @@
+class Solution {
+    public long sumAndMultiply(int n) { // Changed return type to long if allowed
+        long x = 0; // Use long to prevent overflow
+        long sum = 0;
+        
+        String s = String.valueOf(n);
+        
+        for (char c : s.toCharArray()) {
+            if (c != '0') {
+                int digit = c - '0';
+                x = x * 10 + digit;
+                sum += digit;
+            }
+        }
+        
+        return x * sum; // The multiplication is now safely done in 64-bit precision
+    }
+}
