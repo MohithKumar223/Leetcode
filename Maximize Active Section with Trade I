@@ -1,0 +1,39 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    public int maxActiveSectionsAfterTrade(String s) {
+        int originalOnes = 0;
+        List<Character> types = new ArrayList<>();
+        List<Integer> lengths = new ArrayList<>();
+
+        // 1. Group contiguous segments of '0's and '1's
+        int n = s.length();
+        int i = 0;
+        while (i < n) {
+            char ch = s.charAt(i);
+            int j = i;
+            while (j < n && s.charAt(j) == ch) {
+                if (ch == '1') {
+                    originalOnes++;
+                }
+                j++;
+            }
+            types.add(ch);
+            lengths.add(j - i);
+            i = j;
+        }
+
+        // 2. Find maximum gain by merging two zero blocks across a one block
+        int maxGain = 0;
+        for (int k = 1; k < types.size() - 1; k++) {
+            // Check if a block of '1's is between two blocks of '0's
+            if (types.get(k) == '1' && types.get(k - 1) == '0' && types.get(k + 1) == '0') {
+                int gain = lengths.get(k - 1) + lengths.get(k + 1);
+                maxGain = Math.max(maxGain, gain);
+            }
+        }
+
+        return originalOnes + maxGain;
+    }
+}
