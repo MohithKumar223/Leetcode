@@ -1,0 +1,19 @@
+class Solution {
+    public boolean predictTheWinner(int[] nums) {
+        int n = nums.length;
+        // dp[i] will store the maximum net score advantage 
+        // a player can achieve starting from index i.
+        int[] dp = nums.clone();
+        
+        for (int len = 2; len <= n; len++) {
+            for (int i = 0; i <= n - len; i++) {
+                int j = i + len - 1;
+                // Maximum net difference choosing left vs. choosing right end
+                dp[i] = Math.max(nums[i] - dp[i + 1], nums[j] - dp[i]);
+            }
+        }
+        
+        // Player 1 wins if their net score advantage over Player 2 is >= 0
+        return dp[0] >= 0;
+    }
+}
