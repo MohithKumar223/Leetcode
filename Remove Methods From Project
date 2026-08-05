@@ -1,0 +1,53 @@
+import java.util.*;
+
+class Solution {
+    public List<Integer> remainingMethods(int n, int k, int[][] invocations) {
+        // 1. Build adjacency list for invocation graph
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            adj.add(new ArrayList<>());
+        }
+        for (int[] inv : invocations) {
+            adj.get(inv[0]).add(inv[1]);
+        }
+
+        // 2. Identify all suspicious methods using BFS from method k
+        boolean[] suspicious = new boolean[n];
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(k);
+        suspicious[k] = true;
+
+        while (!queue.isEmpty()) {
+            int curr = queue.poll();
+            for (int neighbor : adj.get(curr)) {
+                if (!suspicious[neighbor]) {
+                    suspicious[neighbor] = true;
+                    queue.offer(neighbor);
+                }
+            }
+        }
+
+        // 3. Check if any non-suspicious method invokes a suspicious method
+        for (int[] inv : invocations) {
+            int u = inv[0];
+            int v = inv[1];
+            if (!suspicious[u] && suspicious[v]) {
+                // Return all methods if removal is impossible
+                List<Integer> allMethods = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    allMethods.add(i);
+                }
+                return allMethods;
+            }
+        }
+
+        // 4. Return remaining non-suspicious methods
+        List<Integer> remaining = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if (!suspicious[i]) {
+                remaining.add(i);
+            }
+        }
+        return remaining;
+    }
+}
