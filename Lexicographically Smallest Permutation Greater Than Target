@@ -1,0 +1,56 @@
+class Solution {
+    public String lexGreaterPermutation(String s, String target) {
+        int n = s.length();
+        int[] count = new int[26];
+        for (char c : s.toCharArray()) {
+            count[c - 'a']++;
+        }
+
+        // Try to find the longest common prefix target[0...i-1]
+        // and put a larger character from s at index i
+        for (int i = n - 1; i >= 0; i--) {
+            // Count frequencies needed for target[0...i-1]
+            int[] prefixCount = new int[26];
+            boolean canFormPrefix = true;
+            for (int j = 0; j < i; j++) {
+                char c = target.charAt(j);
+                prefixCount[c - 'a']++;
+                if (prefixCount[c - 'a'] > count[c - 'a']) {
+                    canFormPrefix = false;
+                    break;
+                }
+            }
+
+            if (!canFormPrefix) continue;
+
+            // Remaining available character counts after building target[0...i-1]
+            int[] rem = new int[26];
+            for (int c = 0; c < 26; c++) {
+                rem[c] = count[c] - prefixCount[c];
+            }
+
+            // Find smallest character greater than target[i] available in rem
+            int targetCharIndex = target.charAt(i) - 'a';
+            for (int nextChar = targetCharIndex + 1; nextChar < 26; nextChar++) {
+                if (rem[nextChar] > 0) {
+                    rem[nextChar]--;
+                    
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(target, 0, i);
+                    sb.append((char) ('a' + nextChar));
+
+                    // Append remaining characters in ascending order to minimize result
+                    for (int c = 0; c < 26; c++) {
+                        while (rem[c] > 0) {
+                            sb.append((char) ('a' + c));
+                            rem[c]--;
+                        }
+                    }
+                    return sb.toString();
+                }
+            }
+        }
+
+        return "";
+    }
+}
