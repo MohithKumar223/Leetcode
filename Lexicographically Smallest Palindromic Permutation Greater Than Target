@@ -1,0 +1,98 @@
+import java.util.*;
+
+class Solution {
+    public String lexPalindromicPermutation(String s, String target) {
+        int n = s.length();
+        int[] count = new int[26];
+        for (char c : s.toCharArray()) {
+            count[c - 'a']++;
+        }
+
+        // Check if a valid palindromic permutation exists
+        int oddCount = 0;
+        char midChar = 0;
+        for (int i = 0; i < 26; i++) {
+            if (count[i] % 2 != 0) {
+                oddCount++;
+                midChar = (char) ('a' + i);
+            }
+        }
+
+        if (oddCount > 1) {
+            return ""; // Impossible to form a palindrome
+        }
+
+        // Halve frequencies for building the first half
+        int[] halfCount = new int[26];
+        for (int i = 0; i < 26; i++) {
+            halfCount[i] = count[i] / 2;
+        }
+
+        int halfLen = n / 2;
+        
+        // 1. Try matching the longest possible prefix of target's first half
+        for (int prefixLen = halfLen; prefixLen >= 0; prefixLen--) {
+            int[] available = halfCount.clone();
+            boolean validPrefix = true;
+            
+            // Check if prefixLen matches target
+            for (int i = 0; i < prefixLen; i++) {
+                int c = target.charAt(i) - 'a';
+                if (available[c] > 0) {
+                    available[c]--;
+                } else {
+                    validPrefix = false;
+                    break;
+                }
+            }
+            if (!validPrefix) continue;
+
+            // Try to make position prefixLen strictly greater than target[prefixLen]
+            int startChar = (prefixLen < halfLen) ? (target.charAt(prefixLen) - 'a' + 1) : 0;
+            
+            for (int c = startChar; c < 26; c++) {
+                if (prefixLen < halfLen && available[c] == 0) continue;
+
+                int[] curAvailable = available.clone();
+                char[] firstHalf = new char[halfLen];
+
+                // Fill prefix
+                for (int i = 0; i < prefixLen; i++) {
+                    firstHalf[i] = target.charAt(i);
+                }
+
+                // Place the larger character at prefixLen (if within half length)
+                if (prefixLen < halfLen) {
+                    firstHalf[prefixLen] = (char) ('a' + c);
+                    curAvailable[c]--;
+                }
+
+                // Fill remaining positions in first half greedily with smallest available characters
+                int idx = (prefixLen < halfLen) ? prefixLen + 1 : prefixLen;
+                for (int charIdx = 0; charIdx < 26; charIdx++) {
+                    while (curAvailable[charIdx] > 0) {
+                        firstHalf[idx++] = (char) ('a' + charIdx);
+                        curAvailable[charIdx]--;
+                    }
+                }
+
+                // Construct full palindrome
+                StringBuilder sb = new StringBuilder();
+                sb.append(new String(firstHalf));
+                if (n % 2 != 0) {
+                    sb.append(midChar);
+                }
+                for (int i = halfLen - 1; i >= 0; i--) {
+                    sb.append(firstHalf[i]);
+                }
+
+                String candidate = sb.toString();
+                if (candidate.compareTo(target) > 0) {
+                    return candidate;
+                }
+            }
+        }
+
+        return "";
+    }
+}
