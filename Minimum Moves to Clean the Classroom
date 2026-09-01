@@ -1,0 +1,104 @@
+import java.util.*;
+
+class Solution {
+    public int minMoves(String[] classroom, int energy) {
+        int m = classroom.length;
+        int n = classroom[0].length();
+        
+        int startX = -1, startY = -1;
+        List<int[]> litterList = new ArrayList<>();
+        
+        for (int r = 0; r < m; r++) {
+            for (int c = 0; c < n; c++) {
+                char ch = classroom[r].charAt(c);
+                if (ch == 'S') {
+                    startX = r;
+                    startY = c;
+                } else if (ch == 'L') {
+                    litterList.add(new int[]{r, c});
+                }
+            }
+        }
+        
+        int numLitter = litterList.size();
+        int fullMask = (1 << numLitter) - 1;
+        
+        // Map litter positions to bit indices
+        int[][] litterIdx = new int[m][n];
+        for (int i = 0; i < m; i++) Arrays.fill(litterIdx[i], -1);
+        for (int i = 0; i < numLitter; i++) {
+            litterIdx[litterList.get(i)[0]][litterList.get(i)[1]] = i;
+        }
+        
+        // Queue stores state: {row, col, bitmask, current_energy}
+        Queue<int[]> queue = new LinkedList<>();
+        
+        // Track the maximum remaining energy seen for each state (row, col, mask)
+        int[][][] maxEnergy = new int[m][n][1 << numLitter];
+        for (int r = 0; r < m; r++) {
+            for (int c = 0; c < n; c++) {
+                Arrays.fill(maxEnergy[r][c], -1);
+            }
+        }
+        
+        // Initial state check
+        int initialMask = 0;
+        if (litterIdx[startX][startY] != -1) {
+            initialMask |= (1 << litterIdx[startX][startY]);
+        }
+        
+        queue.offer(new int[]{startX, startY, initialMask, energy});
+        maxEnergy[startX][startY][initialMask] = energy;
+        
+        int steps = 0;
+        int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int[] curr = queue.poll();
+                int r = curr[0];
+                int c = curr[1];
+                int mask = curr[2];
+                int e = curr[3];
+                
+                if (mask == fullMask) {
+                    return steps;
+                }
+                
+                // If out of energy, can't move further unless recharged
+                if (e == 0) continue;
+                
+                for (int[] dir : dirs) {
+                    int nr = r + dir[0];
+                    int nc = c + dir[1];
+                    
+                    if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+                    if (classroom[nr].charAt(nc) == 'X') continue;
+                    
+                    int nextEnergy = e - 1;
+                    char nextCell = classroom[nr].charAt(nc);
+                    
+                    // Restore energy if on a Reset tile
+                    if (nextCell == 'R') {
+                        nextEnergy = energy;
+                    }
+                    
+                    int nextMask = mask;
+                    if (litterIdx[nr][nc] != -1) {
+                        nextMask |= (1 << litterIdx[nr][nc]);
+                    }
+                    
+                    // Only visit if we reach this state with strictly more remaining energy
+                    if (nextEnergy > maxEnergy[nr][nc][nextMask]) {
+                        maxEnergy[nr][nc][nextMask] = nextEnergy;
+                        queue.offer(new int[]{nr, nc, nextMask, nextEnergy});
+                    }
+                }
+            }
+            steps++;
+        }
+        
+        return -1;
+    }
+}
