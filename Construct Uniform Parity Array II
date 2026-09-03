@@ -1,0 +1,23 @@
+class Solution {
+    public boolean uniformArray(int[] nums1) {
+        int minVal = Integer.MAX_VALUE;
+        boolean hasEven = false;
+        boolean hasOdd = false;
+
+        for (int num : nums1) {
+            if (num < minVal) {
+                minVal = num;
+            }
+            if (num % 2 == 0) {
+                hasEven = true;
+            } else {
+                hasOdd = true;
+            }
+        }
+
+        // Return true if:
+        // 1. All numbers already have the same parity (no odd numbers, or no even numbers).
+        // 2. The global minimum element is odd (enables converting even numbers to odd via even - odd = odd).
+        return !hasEven || !hasOdd || (minVal % 2 != 0);
+    }
+}
