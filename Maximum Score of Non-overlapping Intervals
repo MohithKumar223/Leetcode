@@ -1,0 +1,102 @@
+import java.util.*;
+
+class Solution {
+    public int[] maximumWeight(List<List<Integer>> intervals) {
+        int n = intervals.size();
+        
+        // Store interval along with its original index: [l, r, weight, original_index]
+        int[][] sorted = new int[n][4];
+        for (int i = 0; i < n; i++) {
+            sorted[i][0] = intervals.get(i).get(0);
+            sorted[i][1] = intervals.get(i).get(1);
+            sorted[i][2] = intervals.get(i).get(2);
+            sorted[i][3] = i;
+        }
+        
+        // Sort intervals by their start position l_i to easily find non-overlapping choices
+        Arrays.sort(sorted, (a, b) -> Integer.compare(a[0], b[0]));
+        
+        // DP table: dp[i][k] stores the best choice using at most k intervals from index i onwards
+        // DP state structure: {maxScore, list of chosen original indices}
+        State[][] dp = new State[n + 1][5];
+        
+        for (int k = 0; k <= 4; k++) {
+            dp[n][k] = new State(0, new ArrayList<>());
+        }
+        
+        for (int i = n - 1; i >= 0; i--) {
+            // Find the first interval that starts after the current interval ends: l_j > r_i
+            int nextIdx = binarySearch(sorted, sorted[i][1]);
+            
+            for (int k = 1; k <= 4; k++) {
+                // Option 1: Skip current interval
+                State option1 = dp[i + 1][k];
+                
+                // Option 2: Take current interval
+                State prev = dp[nextIdx][k - 1];
+                long takeScore = sorted[i][2] + prev.score;
+                List<Integer> takeIndices = new ArrayList<>();
+                takeIndices.add(sorted[i][3]);
+                takeIndices.addAll(prev.indices);
+                Collections.sort(takeIndices); // Ensure lexicographical comparison
+                
+                State option2 = new State(takeScore, takeIndices);
+                
+                // Compare option1 and option2
+                if (option1.score > option2.score) {
+                    dp[i][k] = option1;
+                } else if (option2.score > option1.score) {
+                    dp[i][k] = option2;
+                } else {
+                    // Equal scores: pick the lexicographically smaller index list
+                    if (compareLists(option2.indices, option1.indices) < 0) {
+                        dp[i][k] = option2;
+                    } else {
+                        dp[i][k] = option1;
+                    }
+                }
+            }
+            dp[i][0] = new State(0, new ArrayList<>());
+        }
+        
+        State best = dp[0][4];
+        int[] result = new int[best.indices.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = best.indices.get(i);
+        }
+        return result;
+    }
+    
+    // Find first interval with left boundary > targetRight
+    private int binarySearch(int[][] sorted, int targetRight) {
+        int low = 0, high = sorted.length;
+        while (low < high) {
+            int mid = (low + high) >>> 1;
+            if (sorted[mid][0] > targetRight) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return low;
+    }
+    
+    private int compareLists(List<Integer> a, List<Integer> b) {
+        int size = Math.min(a.size(), b.size());
+        for (int i = 0; i < size; i++) {
+            int cmp = Integer.compare(a.get(i), b.get(i));
+            if (cmp != 0) return cmp;
+        }
+        return Integer.compare(a.size(), b.size());
+    }
+    
+    private static class State {
+        long score;
+        List<Integer> indices;
+        
+        State(long score, List<Integer> indices) {
+            this.score = score;
+            this.indices = indices;
+        }
+    }
+}
